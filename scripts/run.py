@@ -6,8 +6,10 @@ from src.utils.setup import process_config
 from src.utils.utils import load_json
 
 
-def run(config_path):
+def run(config_path, gpu_device=-1):
     config = process_config(config_path)
+    if gpu_device >= 0:
+        config.gpu_device = [gpu_device]
     AgentClass = globals()[config.agent]
     agent = AgentClass(config)
 
@@ -34,6 +36,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, default='path to config file')
+    parser.add_argument('--gpu-device', type=int, default=-1)
     args = parser.parse_args()
 
-    run(args.config)
+    run(args.config, args.gpu_device)

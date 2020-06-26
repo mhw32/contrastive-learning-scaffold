@@ -17,7 +17,7 @@
     "loss_params": {
         "k": 4096,
         "t": 0.07,
-        "m": 0.5,
+        "m": 0,
         "loss": "NCE"
     },
     "optim_params": {

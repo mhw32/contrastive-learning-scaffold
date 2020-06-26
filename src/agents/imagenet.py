@@ -40,7 +40,6 @@ class ImageNetAgent(BaseAgent):
 
         self.val_acc = []
         self.train_loss = []
-        self.train_extra = []
 
     def init_memory_bank(self, attr_name='memory_bank'):
         data_len = len(self.train_dataset)
@@ -66,10 +65,7 @@ class ImageNetAgent(BaseAgent):
         self.train_ordered_labels = np.array(train_labels)
 
     def create_model(self):
-        assert self.config.data_params.image_size == 224
-        resnet_class = getattr(models, self.config.model_params.resnet_version)
-        model = resnet_class(pretrained=False,
-                             num_classes=self.config.model_params.out_dim)
+        model = resnet18(low_dim=self.config.model_params.out_dim)
         self.model = model.to(self.device)
 
     def create_optimizer(self):
@@ -114,7 +110,6 @@ class ImageNetAgent(BaseAgent):
             tqdm_batch.set_postfix({"Loss": epoch_loss.avg})
 
             self.train_loss.append(epoch_loss.val)
-            self.train_extra.append(extra)
 
             self.current_iteration += 1
             tqdm_batch.update()
@@ -242,8 +237,6 @@ class ImageNetTransferAgent(BaseAgent):
         else:
             raise Exception('is this an image module?')
 
-        self.resnet = nn.Sequential(*list(self.resnet.children())[:-2])
-
         self.resnet = self.resnet.eval()
         for param in self.resnet.parameters():
             param.requires_grad = False
@@ -308,7 +301,7 @@ class ImageNetTransferAgent(BaseAgent):
             labels = labels.to(self.device)
 
             with torch.no_grad():
-                embeddings = self.resnet(images)
+                embeddings = self.resnet(images, layer=5)
                 embeddings = embeddings.view(batch_size, -1)
 
             logits = self.model(embeddings)
@@ -342,7 +335,7 @@ class ImageNetTransferAgent(BaseAgent):
                 batch_size = images.size(0)
                 images = images.to(self.device)
 
-                embeddings = self._forward_func(self.resnet, images)
+                embeddings = self.resnet(images, layer=5)
                 embeddings = embeddings.view(batch_size, -1)
                 logits = self.model(embeddings)
 
